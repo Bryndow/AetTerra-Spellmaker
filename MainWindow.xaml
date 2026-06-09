@@ -73,6 +73,7 @@
                         <Label Content="States" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" Padding="5,0,5,5" Grid.RowSpan="2"/>
                         <Label Content="Drain" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" Padding="5,0,5,5" Grid.RowSpan="2"/>
                         <Slider Name="slDrain" Grid.ColumnSpan="4" HorizontalAlignment="Stretch" Grid.Row="2" VerticalAlignment="Top" Maximum="200" SmallChange="1" LargeChange="5" Value="50"/>
+                        <CheckBox Name="cbUseTrgt" Grid.Column="2" Grid.ColumnSpan="2" Content="Use Target" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Sequence" Grid.Row="1" Grid.RowSpan="4">

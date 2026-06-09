@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Windows;
+using System.Windows.Annotations.Storage;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -26,17 +27,42 @@ namespace FIO_zeitverteib
         bool useBase = false;
         bool continuous = false;
         States allowedStates = 0;
+        bool useTrgt = false;
         public enum States { either, air, ground, differ}
 
-        public Spell(string name,int drain, string baseName, List<int> sequence, bool useBase, bool continuous, States allowedStates)
+        public Spell(string name,int drain, string baseName, List<int> sequence, bool useBase, bool continuous, States allowedStates, bool useTrgt)
         {
-            this.name = name;
+            // Linebreak check. 1st level, for cleaner data. Effctivley removes \n and \r if present.
+            // WARNING: Removes the first char, (or first 2 chars) and not necessarily the operators themselves!!!
+            string nStore = name;
+            if (nStore.Contains("\r\n"))
+            {
+                nStore = nStore.Remove(0,2);
+            }
+            else if (nStore.Contains("\n") || nStore.Contains("\r"))
+            {
+                nStore = nStore.Remove(0, 1);
+            }
+            this.name = nStore;
+            //
+
+            nStore = baseName;
+            if (nStore.Contains("\r\n"))
+            {
+                nStore = nStore.Remove(0, 2);
+            }
+            else if (nStore.Contains("\n") || nStore.Contains("\r"))
+            {
+                nStore = nStore.Remove(0, 1);
+            }
+            this.baseName = nStore;
+
             this.drain = drain;
-            this.baseName = baseName;
             this.sequence = sequence;
             this.useBase = useBase;
             this.continuous = continuous;
             this.allowedStates = allowedStates;
+            this.useTrgt = useTrgt;
         }
 
         public string getName() {  return name; }
@@ -46,7 +72,7 @@ namespace FIO_zeitverteib
         public bool isContinuous() { return continuous; }
         public States getAllowedStates() { return allowedStates; }
         public List<int> getSequence() { return sequence; }
-
+        public bool isUsingTrgt() { return useTrgt; }
         public string getSeqAsString()
         {
             string store = string.Empty;
@@ -114,6 +140,7 @@ namespace FIO_zeitverteib
             string storeBaseName = string.Empty;
             bool storeUseBase = false;
             bool storeContinuous = false;
+            bool storeUseTrgt = false;
             string storeSeqSingle = string.Empty;
             Spell.States storeState = 0;
             List<int> storeSeq = new List<int>();
@@ -149,7 +176,7 @@ namespace FIO_zeitverteib
                         int tmp = 0;
                         if (storeDrain.Length > 0)
                             tmp = Convert.ToInt32(storeDrain);
-                        store.Add(new Spell(storeName, tmp, storeBaseName, storeSeq, storeUseBase, storeContinuous, storeState));
+                        store.Add(new Spell(storeName, tmp, storeBaseName, storeSeq, storeUseBase, storeContinuous, storeState, storeUseTrgt));
                         //Toss all values
                         storeName = string.Empty;
                         storeDrain = string.Empty;
@@ -158,6 +185,8 @@ namespace FIO_zeitverteib
                         storeUseBase = false;
                         storeContinuous = false;
                         storeState = 0;
+                        storeUseTrgt = false;
+
                         step = 0;
                     }
                     else if (raw[i] != ';' && raw[i] != ',')
@@ -181,6 +210,7 @@ namespace FIO_zeitverteib
                             case 6: if (raw[i] == '0') storeState = Spell.States.either; if (raw[i] == '1') storeState = Spell.States.air; 
                                 if (raw[i] == '2') storeState = Spell.States.ground; if (raw[i] == '3') storeState = Spell.States.differ;
                                 break;
+                            case 7: if (raw[i] == '1') storeUseTrgt = true; break;
                         }
                     }
                 }
@@ -192,6 +222,7 @@ namespace FIO_zeitverteib
 
         public bool writeFile(Mode m, List<Spell> lib)
         {
+            // Called when user presses "save" button. Overwrites the original selected file, with in memory, and new spells.
             if (m == Mode.upgrade)
             {
                 if (stream != null && stream.CanWrite)
@@ -222,6 +253,7 @@ namespace FIO_zeitverteib
                     return true;
                     }
                 }
+            // Called when user presses "export" button. Creates/Overwrites two new files, with in memory, and new spells.
             if (m == Mode.gd)
             {
                 bool abort = false;
@@ -231,9 +263,9 @@ namespace FIO_zeitverteib
 
                 if (!abort)
                 {
-                    StreamWriter control = new StreamWriter(saveDir + "control.txt");
-                    StreamWriter init = new StreamWriter(saveDir + "init.txt");
-                    StreamWriter append = new StreamWriter(saveDir + "append.txt");
+                    StreamWriter control = new StreamWriter(saveDir + "\\control.txt");
+                    StreamWriter init = new StreamWriter(saveDir + "\\init.txt");
+                    StreamWriter append = new StreamWriter(saveDir + "\\append.txt");
                     string cStore = string.Empty;
                     string iStore = string.Empty;
                     string aStore = string.Empty;
@@ -260,29 +292,55 @@ namespace FIO_zeitverteib
                         cStore += "\n\n";
 
                         // init
+                        //
                         List<int> t = c.getSequence();
-                        iStore += "var " + c.getName() + " = Spell.new(\"" + c.getName() + "\"," + c.getDrain() + "[";
+                        iStore += "var " + c.getName() + " = Spell.new(\"" + c.getName() + "\"," + c.getDrain() + ",[";
+                        // adds sequence
                         for (int j = 0; t.Count() > j; j++)
                         {
                             iStore += t[j].ToString();
                             if (j != t.Count())
                                 iStore += ",";
-                        } // adds sequence
+                        } 
                         iStore += "],";
+                        // useBase & continuous
                         switch (c.isUsingBase())
                         {
                             case true: iStore += "true"; break;
                             case false: iStore += "false"; break;
                         }
+                        iStore += ",";
                         switch (c.isContinuous())
                         {
                             case true: iStore += "true"; break;
                             case false: iStore += "false"; break;
                         }
+                        iStore += ",";
+                        // base name, if present
+                        if (c.isUsingBase())
+                            iStore += "\"" + c.getBaseName() + "\"";
+                        else iStore += "\"\"";
+                        iStore += ",";
+                        // useTrgt
+                        switch (c.isUsingTrgt())
+                        {
+                            case true: iStore += "true"; break;
+                            case false : iStore += "false"; break;
+                        }
+
                         iStore += ")\n";
+
+                        // append
+                        aStore += "spells.append(" + c.getName() + ")\n"; // now that's what I call a "one-liner"
                     }
                     control.Write(cStore);
                     init.Write(iStore);
+                    append.Write(aStore);
+
+                    // Flush (OMG THIS IS SO UNNECESSARY)
+                    control.Close();
+                    init.Close();
+                    append.Close();
 
                     return true;
                 }
@@ -376,8 +434,8 @@ namespace FIO_zeitverteib
             if (cbStateBoth.IsChecked == true) cStates = Spell.States.differ;
 
 
-            if (cbUseBase.IsChecked != null && cbContinuous.IsChecked != null)
-                spellCache.Add(new Spell(tbName.Text, Convert.ToInt32(slDrain.Value), tbBaseName.Text, seq, (bool)cbUseBase.IsChecked, (bool)cbContinuous.IsChecked, cStates));
+            if (cbUseBase.IsChecked != null && cbContinuous.IsChecked != null && cbUseTrgt.IsChecked != null)
+                spellCache.Add(new Spell(tbName.Text, Convert.ToInt32(slDrain.Value), tbBaseName.Text, seq, (bool)cbUseBase.IsChecked, (bool)cbContinuous.IsChecked, cStates, (bool)cbUseTrgt.IsChecked));
 
             seq = new List<int>();
             spellCache = new List<Spell>();
@@ -402,7 +460,15 @@ namespace FIO_zeitverteib
 
         private void btnExport_Click(object sender, RoutedEventArgs e)
         {
-
+            List<Spell>? t = null;
+            t = carl.readFile();
+            if (t != null)
+            {
+                t = matchAndReplace(spellCache, t);
+                carl.writeFile(Librarian.Mode.gd, t);
+            }
+            else
+                MessageBox.Show("No source file.");
         }
         #endregion
 
