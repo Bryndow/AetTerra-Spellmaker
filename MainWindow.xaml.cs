@@ -85,7 +85,7 @@ namespace FIO_zeitverteib
     public class Librarian
     {
         public enum Mode { upgrade, gd}
-        Stream? stream;
+        string saveFileDir = string.Empty;
         string saveDir = string.Empty;
 
         // Select, has, toss.
@@ -94,19 +94,28 @@ namespace FIO_zeitverteib
         {
             OpenFileDialog ofd = new OpenFileDialog();
             if (ofd.ShowDialog() == true)
-            { stream = ofd.OpenFile(); return true; }
-            else stream = null;
+            {
+                saveFileDir = ofd.FileName;
+                return true; }
+            else saveFileDir = string.Empty;
             return false;
         }
         public void tossFile()
         {
-            stream = null;
+            saveFileDir = string.Empty;
         }
+        // Function is the literal devil. Inefficient as hell, dumb, could've been better.
+        // And most importantly, a great lesson. DO NOT USE STREAMWRITER TO CHECK FOR WRITEABILIY. IT WILL DELETE ALL DATA ON FLUSH/CLOSE
         public bool hasFile()
         {
-            if (stream != null && stream.CanRead && stream.CanWrite)
+            try
+            {
+                StreamReader test = new StreamReader(saveFileDir);
+                test.Close();
                 return true;
-            else return false;
+            }
+            catch
+            { return false; }
         }
         public bool dirSelect()
         {
@@ -153,12 +162,10 @@ namespace FIO_zeitverteib
                     abort = true;
                 }
             }
+            StreamReader sr = new StreamReader(saveFileDir);
 
             if (!abort)
             {
-#pragma warning disable CS8604 // Mögliches Nullverweisargument.
-                StreamReader sr = new StreamReader(stream);
-#pragma warning restore CS8604 // Mögliches Nullverweisargument.
                 raw = sr.ReadToEnd();
                 sr.Close();
                 int step = 0;
@@ -225,29 +232,46 @@ namespace FIO_zeitverteib
             // Called when user presses "save" button. Overwrites the original selected file, with in memory, and new spells.
             if (m == Mode.upgrade)
             {
-                if (stream != null && stream.CanWrite)
+                if (hasFile())
                 {
-                    StreamWriter swr = new StreamWriter(stream);
+                    StreamWriter swr = new StreamWriter(saveFileDir);
                     // Writing Section
                     string write = string.Empty;
                     for (int i = 0; i < lib.Count; i++)
                     {
-                        Spell c = lib[i];
-                        write += c.getName() + "," + c.getBaseName() + "," + c.getSeqAsString() + ",";
+                        Spell c = lib[i]; // Localizes current Spell, for less crowded source code
+                        // Name, Drain, Base Name
+                        write += c.getName() + "," + c.getDrain().ToString() + "," + c.getBaseName() + ",";
+                        // Sequence
+                        List<int> locSeq = c.getSequence();
+                        for (int j = 0; locSeq.Count() > j; j++)
+                        {
+                            write += locSeq[j].ToString() + ".";
+                        }
+                        write += ",";
+                        // Base
                         if (c.isUsingBase()) write += "1,";
                         else write += "0,";
+                        // Continuous
                         if (c.isContinuous()) write += "1,";
                         else write += "0,";
+                        // States
                         switch (c.getAllowedStates())
                         {
-                            case Spell.States.either: write += "0;"; break;
-                            case Spell.States.air: write += "1;"; break;
-                            case Spell.States.ground: write += "2;"; break;
-                            case Spell.States.differ: write += "3;"; break;
+                            case Spell.States.either: write += "0"; break;
+                            case Spell.States.air: write += "1"; break;
+                            case Spell.States.ground: write += "2"; break;
+                            case Spell.States.differ: write += "3"; break;
                         }
-                        write += "\n";
+                        write += ",";
+                        // Uses Target
+                        if (c.isUsingTrgt()) write += "1";
+                        else write += "0";
+                        // END
+                        write += ";\n";
                     }
-                    swr.Write(write);
+                    if (write != string.Empty)
+                        swr.Write(write);
                     swr.Close();
                     // end of Writing Section
                     return true;
@@ -375,6 +399,9 @@ namespace FIO_zeitverteib
             debug_display();
         }
 
+
+        // Surprisingly enough, competely functional.
+        // Checks for Spells with the same "name" property, and when finding one, replaces it with the latest instance, regardless of wether the data qualifies.
         public List<Spell> matchAndReplace(List<Spell> toAdd, List<Spell> baseList)
         {
             for (int i=0;i<toAdd.Count;i++)
@@ -413,6 +440,7 @@ namespace FIO_zeitverteib
             if (t != null)
             {
                 t = matchAndReplace(spellCache, t);
+                spellCache = new List<Spell>();
                 carl.writeFile(Librarian.Mode.upgrade, t);
             }
             else
@@ -425,31 +453,30 @@ namespace FIO_zeitverteib
             debug_display();
         }
 
+        // Functional, with a few checks, to guarantee a minimum amount of data is present
         private void btnPassIn_Click(object sender, RoutedEventArgs e)
         {
-            Spell.States cStates = Spell.States.either;
-            if (cbStateRegardless.IsChecked == true) cStates = Spell.States.either;
-            if (cbStateAir.IsChecked == true) cStates = Spell.States.air;
-            if (cbStateGround.IsChecked == true) cStates = Spell.States.ground;
-            if (cbStateBoth.IsChecked == true) cStates = Spell.States.differ;
-
-
-            if (cbUseBase.IsChecked != null && cbContinuous.IsChecked != null && cbUseTrgt.IsChecked != null)
-                spellCache.Add(new Spell(tbName.Text, Convert.ToInt32(slDrain.Value), tbBaseName.Text, seq, (bool)cbUseBase.IsChecked, (bool)cbContinuous.IsChecked, cStates, (bool)cbUseTrgt.IsChecked));
-
-            seq = new List<int>();
-            spellCache = new List<Spell>();
-
-            // Display currently in-file spells' names
-            debug_showSpells.Items.Clear();
-            List<Spell>? rs = carl.readFile();
-            if (rs != null)
+            if (seq.Count > 0)
             {
-                for (int i = 0; rs.Count > i; i++)
+                if (tbName.Text.Length > 0)
                 {
-                    debug_showSpells.Items.Add(rs[i].getName());
+                    Spell.States cStates = Spell.States.either;
+                    if (cbStateRegardless.IsChecked == true) cStates = Spell.States.either;
+                    if (cbStateAir.IsChecked == true) cStates = Spell.States.air;
+                    if (cbStateGround.IsChecked == true) cStates = Spell.States.ground;
+                    if (cbStateBoth.IsChecked == true) cStates = Spell.States.differ;
+
+
+                    if (cbUseBase.IsChecked != null && cbContinuous.IsChecked != null && cbUseTrgt.IsChecked != null)
+                        spellCache.Add(new Spell(tbName.Text, Convert.ToInt32(slDrain.Value), tbBaseName.Text, seq, (bool)cbUseBase.IsChecked, (bool)cbContinuous.IsChecked, cStates, (bool)cbUseTrgt.IsChecked));
+
+                    seq = new List<int>();
                 }
+                else
+                    MessageBox.Show("This Spell has no name. The name field MUST be filled.");
             }
+            else
+                MessageBox.Show("The current Spell has no sequence.");
         }
 
         private void btnTossFile_Click(object sender, RoutedEventArgs e)
