@@ -162,10 +162,10 @@ namespace FIO_zeitverteib
                     abort = true;
                 }
             }
-            StreamReader sr = new StreamReader(saveFileDir);
 
             if (!abort)
             {
+                StreamReader sr = new StreamReader(saveFileDir);
                 raw = sr.ReadToEnd();
                 sr.Close();
                 int step = 0;
@@ -382,6 +382,7 @@ namespace FIO_zeitverteib
         public MainWindow()
         {
             InitializeComponent();
+            update();
         }
 
         public void debug_display()
@@ -392,13 +393,181 @@ namespace FIO_zeitverteib
             {
                 debug_curentSeqDisplay.Items.Add(seq[i]);
             }
+
+            List<Spell>? tmpSpells = carl.readFile();
+            if (tmpSpells != null)
+                for (int i=0;i<tmpSpells.Count;i++)
+                    debug_showSpells.Items.Add(tmpSpells[i].getName()+"\t Base: "+ tmpSpells[i].isUsingBase().ToString());
         }
 
         public void update()
         {
             debug_display();
+            if (seq.Count > 0)
+            {
+                if (seq[seq.Count - 1] > 20)
+                    hideRing(2);
+                else if (seq[seq.Count - 1] > 30)
+                    hideRing(3);
+                else
+                    hideRing(1);
+            }
+            else
+                hideRing(0);
         }
 
+        // Resets the buttons' availability.
+        public void popOutButtons()
+        {
+            btnS_MIN_1.IsEnabled = true;
+            btnS_MIN_2.IsEnabled = true;
+            btnS_MIN_3.IsEnabled = true;
+            btnS_MIN_4.IsEnabled = true;
+            btnS_MIN_5.IsEnabled = true;
+            btnS_MIN_6.IsEnabled = true;
+            btnS_MIN_7.IsEnabled = true;
+            btnS_MIN_8.IsEnabled = true;
+
+            btnS_MID_1.IsEnabled = true;
+            btnS_MID_2.IsEnabled = true;
+            btnS_MID_3.IsEnabled = true;
+            btnS_MID_4.IsEnabled = true;
+            btnS_MID_5.IsEnabled = true;
+            btnS_MID_6.IsEnabled = true;
+            btnS_MID_7.IsEnabled = true;
+            btnS_MID_8.IsEnabled = true;
+
+            btnS_MAX_1.IsEnabled = true;
+            btnS_MAX_2.IsEnabled = true;
+            btnS_MAX_3.IsEnabled = true;
+            btnS_MAX_4.IsEnabled = true;
+            btnS_MAX_5.IsEnabled = true;
+            btnS_MAX_6.IsEnabled = true;
+            btnS_MAX_7.IsEnabled = true;
+            btnS_MAX_8.IsEnabled = true;
+
+        }
+
+        // Hides non-adjacent rings, to prevent user from creating impossible (from game perspective) sequences. Starting number is 0 (<1)
+        public void hideRing(int r)
+        {
+            if (r < 1)
+            {
+                btnS_MIN_1.Visibility = Visibility.Visible;
+                btnS_MIN_2.Visibility = Visibility.Visible;
+                btnS_MIN_3.Visibility = Visibility.Visible;
+                btnS_MIN_4.Visibility = Visibility.Visible;
+                btnS_MIN_5.Visibility = Visibility.Visible;
+                btnS_MIN_6.Visibility = Visibility.Visible;
+                btnS_MIN_7.Visibility = Visibility.Visible;
+                btnS_MIN_8.Visibility = Visibility.Visible;
+
+                btnS_MID_1.Visibility = Visibility.Hidden;
+                btnS_MID_2.Visibility = Visibility.Hidden;
+                btnS_MID_3.Visibility = Visibility.Hidden;
+                btnS_MID_4.Visibility = Visibility.Hidden;
+                btnS_MID_5.Visibility = Visibility.Hidden;
+                btnS_MID_6.Visibility = Visibility.Hidden;
+                btnS_MID_7.Visibility = Visibility.Hidden;
+                btnS_MID_8.Visibility = Visibility.Hidden;
+
+                btnS_MAX_1.Visibility = Visibility.Hidden;
+                btnS_MAX_2.Visibility = Visibility.Hidden;
+                btnS_MAX_3.Visibility = Visibility.Hidden;
+                btnS_MAX_4.Visibility = Visibility.Hidden;
+                btnS_MAX_5.Visibility = Visibility.Hidden;
+                btnS_MAX_6.Visibility = Visibility.Hidden;
+                btnS_MAX_7.Visibility = Visibility.Hidden;
+                btnS_MAX_8.Visibility = Visibility.Hidden;
+            }
+            else if (r == 1)
+            {
+                btnS_MIN_1.Visibility = Visibility.Visible;
+                btnS_MIN_2.Visibility = Visibility.Visible;
+                btnS_MIN_3.Visibility = Visibility.Visible;
+                btnS_MIN_4.Visibility = Visibility.Visible;
+                btnS_MIN_5.Visibility = Visibility.Visible;
+                btnS_MIN_6.Visibility = Visibility.Visible;
+                btnS_MIN_7.Visibility = Visibility.Visible;
+                btnS_MIN_8.Visibility = Visibility.Visible;
+
+                btnS_MID_1.Visibility = Visibility.Visible;
+                btnS_MID_2.Visibility = Visibility.Visible;
+                btnS_MID_3.Visibility = Visibility.Visible;
+                btnS_MID_4.Visibility = Visibility.Visible;
+                btnS_MID_5.Visibility = Visibility.Visible;
+                btnS_MID_6.Visibility = Visibility.Visible;
+                btnS_MID_7.Visibility = Visibility.Visible;
+                btnS_MID_8.Visibility = Visibility.Visible;
+
+                btnS_MAX_1.Visibility = Visibility.Hidden;
+                btnS_MAX_2.Visibility = Visibility.Hidden;
+                btnS_MAX_3.Visibility = Visibility.Hidden;
+                btnS_MAX_4.Visibility = Visibility.Hidden;
+                btnS_MAX_5.Visibility = Visibility.Hidden;
+                btnS_MAX_6.Visibility = Visibility.Hidden;
+                btnS_MAX_7.Visibility = Visibility.Hidden;
+                btnS_MAX_8.Visibility = Visibility.Hidden;
+            }
+            else if (r == 2)
+            {
+                btnS_MIN_1.Visibility = Visibility.Visible;
+                btnS_MIN_2.Visibility = Visibility.Visible;
+                btnS_MIN_3.Visibility = Visibility.Visible;
+                btnS_MIN_4.Visibility = Visibility.Visible;
+                btnS_MIN_5.Visibility = Visibility.Visible;
+                btnS_MIN_6.Visibility = Visibility.Visible;
+                btnS_MIN_7.Visibility = Visibility.Visible;
+                btnS_MIN_8.Visibility = Visibility.Visible;
+
+                btnS_MID_1.Visibility = Visibility.Visible;
+                btnS_MID_2.Visibility = Visibility.Visible;
+                btnS_MID_3.Visibility = Visibility.Visible;
+                btnS_MID_4.Visibility = Visibility.Visible;
+                btnS_MID_5.Visibility = Visibility.Visible;
+                btnS_MID_6.Visibility = Visibility.Visible;
+                btnS_MID_7.Visibility = Visibility.Visible;
+                btnS_MID_8.Visibility = Visibility.Visible;
+
+                btnS_MAX_1.Visibility = Visibility.Visible;
+                btnS_MAX_2.Visibility = Visibility.Visible;
+                btnS_MAX_3.Visibility = Visibility.Visible;
+                btnS_MAX_4.Visibility = Visibility.Visible;
+                btnS_MAX_5.Visibility = Visibility.Visible;
+                btnS_MAX_6.Visibility = Visibility.Visible;
+                btnS_MAX_7.Visibility = Visibility.Visible;
+                btnS_MAX_8.Visibility = Visibility.Visible;
+            }
+            else if (r == 3)
+            {
+                btnS_MIN_1.Visibility = Visibility.Hidden;
+                btnS_MIN_2.Visibility = Visibility.Hidden;
+                btnS_MIN_3.Visibility = Visibility.Hidden;
+                btnS_MIN_4.Visibility = Visibility.Hidden;
+                btnS_MIN_5.Visibility = Visibility.Hidden;
+                btnS_MIN_6.Visibility = Visibility.Hidden;
+                btnS_MIN_7.Visibility = Visibility.Hidden;
+                btnS_MIN_8.Visibility = Visibility.Hidden;
+
+                btnS_MID_1.Visibility = Visibility.Visible;
+                btnS_MID_2.Visibility = Visibility.Visible;
+                btnS_MID_3.Visibility = Visibility.Visible;
+                btnS_MID_4.Visibility = Visibility.Visible;
+                btnS_MID_5.Visibility = Visibility.Visible;
+                btnS_MID_6.Visibility = Visibility.Visible;
+                btnS_MID_7.Visibility = Visibility.Visible;
+                btnS_MID_8.Visibility = Visibility.Visible;
+
+                btnS_MAX_1.Visibility = Visibility.Visible;
+                btnS_MAX_2.Visibility = Visibility.Visible;
+                btnS_MAX_3.Visibility = Visibility.Visible;
+                btnS_MAX_4.Visibility = Visibility.Visible;
+                btnS_MAX_5.Visibility = Visibility.Visible;
+                btnS_MAX_6.Visibility = Visibility.Visible;
+                btnS_MAX_7.Visibility = Visibility.Visible;
+                btnS_MAX_8.Visibility = Visibility.Visible;
+            }
+        }
 
         // Surprisingly enough, competely functional.
         // Checks for Spells with the same "name" property, and when finding one, replaces it with the latest instance, regardless of wether the data qualifies.
@@ -426,6 +595,8 @@ namespace FIO_zeitverteib
         private void btnClear_Click(object sender, RoutedEventArgs e)
         {
             seq.Clear();
+            popOutButtons();
+            update();
         }
 
         private void btnSelFile_Click(object sender, RoutedEventArgs e)
@@ -445,12 +616,13 @@ namespace FIO_zeitverteib
             }
             else
                 MessageBox.Show("No source file.");
+            update();
         }
 
         private void btnRead_Click(object sender, RoutedEventArgs e)
         {
             carl.readFile();
-            debug_display();
+            update();
         }
 
         // Functional, with a few checks, to guarantee a minimum amount of data is present
@@ -471,18 +643,24 @@ namespace FIO_zeitverteib
                         spellCache.Add(new Spell(tbName.Text, Convert.ToInt32(slDrain.Value), tbBaseName.Text, seq, (bool)cbUseBase.IsChecked, (bool)cbContinuous.IsChecked, cStates, (bool)cbUseTrgt.IsChecked));
 
                     seq = new List<int>();
+                    popOutButtons();
                 }
                 else
                     MessageBox.Show("This Spell has no name. The name field MUST be filled.");
             }
             else
                 MessageBox.Show("The current Spell has no sequence.");
+
+            update();
         }
 
         private void btnTossFile_Click(object sender, RoutedEventArgs e)
         {
             carl.tossFile();
             carl.tossDir();
+            seq = new List<int>();
+            popOutButtons();
+            update();
         }
 
         private void btnExport_Click(object sender, RoutedEventArgs e)
@@ -493,9 +671,12 @@ namespace FIO_zeitverteib
             {
                 t = matchAndReplace(spellCache, t);
                 carl.writeFile(Librarian.Mode.gd, t);
+                seq.Clear();
+                popOutButtons();
             }
             else
                 MessageBox.Show("No source file.");
+            update();
         }
         #endregion
 
@@ -504,144 +685,168 @@ namespace FIO_zeitverteib
         private void btnS_MIN_1_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(11);
+            btnS_MIN_1.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_2_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(12);
+            btnS_MIN_2.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_3_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(13);
+            btnS_MIN_3.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_4_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(14);
+            btnS_MIN_4.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_5_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(15);
+            btnS_MIN_5.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_6_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(16);
+            btnS_MIN_6.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_7_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(17);
+            btnS_MIN_7.IsEnabled = false;
             update();
         }
 
         private void btnS_MIN_8_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(18);
+            btnS_MIN_8.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_1_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(21);
+            btnS_MID_1.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_2_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(22);
+            btnS_MID_2.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_3_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(23);
+            btnS_MID_3.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_4_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(24);
+            btnS_MID_4.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_5_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(25);
+            btnS_MID_5.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_6_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(26);
+            btnS_MID_6.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_7_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(27);
+            btnS_MID_7.IsEnabled = false;
             update();
         }
 
         private void btnS_MID_8_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(28);
+            btnS_MID_8.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_1_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(31);
+            btnS_MAX_1.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_2_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(32);
+            btnS_MAX_2.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_3_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(33);
+            btnS_MAX_3.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_4_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(34);
+            btnS_MAX_4.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_5_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(35);
+            btnS_MAX_5.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_6_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(36);
+            btnS_MAX_6.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_7_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(37);
+            btnS_MAX_7.IsEnabled = false;
             update();
         }
 
         private void btnS_MAX_8_Click(object sender, RoutedEventArgs e)
         {
             seq.Add(38);
+            btnS_MAX_8.IsEnabled = false;
             update();
         }
         #endregion
